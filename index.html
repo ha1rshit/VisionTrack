@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRoom Vision - Persistent Multi-Person Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Statistics Bar -->
+        <div class="top-bar">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-label">People in Room:</span>
+                    <span class="stat-value" id="current-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Entered:</span>
+                    <span class="stat-value" id="total-entered">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Left:</span>
+                    <span class="stat-value" id="total-left">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Speech:</span>
+                    <span class="stat-value" id="speech-status">ON</span>
+                </div>
+            </div>
+            <div class="top-controls">
+                <button class="top-btn" id="settings-btn">
+                    <span class="btn-icon">⚙️</span>
+                    <span class="btn-text">Settings</span>
+                </button>
+                <button class="top-btn" id="admin-btn">
+                    <span class="btn-icon">👨‍💼</span>
+                    <span class="btn-text">Admin</span>
+                </button>
+                <button class="top-btn" id="export-btn">
+                    <span class="btn-icon">📥</span>
+                    <span class="btn-text">Export</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="overlay"></canvas>
+                </div>
+            </div>
+
+            <!-- Controls and Info Panel -->
+            <div class="side-panel">
+                <!-- Live Controls -->
+                <div class="controls-section">
+                    <h3>Live Controls</h3>
+                    <div class="controls-grid">
+                        <button class="control-btn" id="mute-btn">
+                            <span class="btn-icon">🔊</span>
+                            <span class="btn-text">Mute Speech</span>
+                        </button>
+                        <button class="control-btn" id="pause-btn">
+                            <span class="btn-icon">⏸️</span>
+                            <span class="btn-text">Pause Tracking</span>
+                        </button>
+                        <button class="control-btn" id="clear-btn">
+                            <span class="btn-icon">🗑️</span>
+                            <span class="btn-text">Clear Storage</span>
+                        </button>
+                        <button class="control-btn" id="screenshot-btn">
+                            <span class="btn-icon">📸</span>
+                            <span class="btn-text">Screenshot</span>
+                        </button>
+                        <button class="control-btn" id="demo-btn">
+                            <span class="btn-icon">🎭</span>
+                            <span class="btn-text">Demo Mode</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current People Display -->
+                <div class="current-people">
+                    <h3>Currently in Room</h3>
+                    <div class="people-grid" id="current-people-grid">
+                        <div class="no-people">No people currently detected</div>
+                    </div>
+                </div>
+
+                <!-- Motion Activity -->
+                <div class="motion-activity">
+                    <h4>Motion Activity</h4>
+                    <div class="activity-bar">
+                        <div class="activity-fill" id="activity-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Timeline -->
+        <div class="timeline-section">
+            <h3>Recent Activity</h3>
+            <div class="timeline" id="event-timeline">
+                <div class="timeline-item loading">Loading activity history...</div>
+            </div>
+        </div>
+
+        <!-- Privacy Notice -->
+        <div class="privacy-notice">
+            <p>🔒 <strong>Privacy Note:</strong> This app stores images and logs locally in your browser only. Data is not uploaded anywhere unless you export it manually.</p>
+        </div>
+
+        <!-- Admin Modal -->
+        <div class="modal" id="admin-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Admin Panel</h2>
+                    <button class="modal-close" id="admin-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" data-tab="images">Stored Images</button>
+                        <button class="admin-tab" data-tab="logs">Event Logs</button>
+                        <button class="admin-tab" data-tab="statistics">Statistics</button>
+                    </div>
+
+                    <div class="admin-content">
+                        <!-- Images Tab -->
+                        <div class="admin-tab-content active" data-tab="images">
+                            <div class="image-grid" id="stored-images">
+                                <div class="no-images">No images stored yet</div>
+                            </div>
+                        </div>
+
+                        <!-- Logs Tab -->
+                        <div class="admin-tab-content" data-tab="logs">
+                            <div class="logs-container">
+                                <div class="logs-header">
+                                    <button class="btn-small" id="download-logs">Download Logs</button>
+                                    <button class="btn-small" id="clear-logs">Clear Logs</button>
+                                </div>
+                                <div class="logs-list" id="logs-list">
+                                    <div class="no-logs">No events logged yet</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Tab -->
+                        <div class="admin-tab-content" data-tab="statistics">
+                            <div class="statistics-grid">
+                                <div class="stat-card">
+                                    <h4>Total Sessions</h4>
+                                    <span class="stat-number" id="total-sessions">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Peak Occupancy</h4>
+                                    <span class="stat-number" id="peak-occupancy">0</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Avg. Stay Time</h4>
+                                    <span class="stat-number" id="avg-stay-time">0m</span>
+                                </div>
+                                <div class="stat-card">
+                                    <h4>Storage Used</h4>
+                                    <span class="stat-number" id="storage-used">0 MB</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settings-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button class="modal-close" id="settings-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="tracker-timeout">Tracker Timeout (seconds):</label>
+                            <input type="number" id="tracker-timeout" min="1" max="10" value="5">
+                        </div>
+                        <div class="setting-item">
+                            <label for="reappear-threshold">Reappear Threshold (seconds):</label>
+                            <input type="number" id="reappear-threshold" min="5" max="30" value="10">
+                        </div>
+                        <div class="setting-item">
+                            <label for="max-storage">Max Stored Images:</label>
+                            <input type="number" id="max-storage" min="50" max="500" value="200">
+                        </div>
+                        <div class="setting-item">
+                            <label for="detection-throttle">Detection Throttle (ms):</label>
+                            <input type="number" id="detection-throttle" min="50" max="500" value="200">
+                        </div>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="auto-export" checked>
+                                Auto-export logs on page unload
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="face-blur" checked>
+                                Blur faces in stored images
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn-primary" id="save-settings">Save Settings</button>
+                        <button class="btn-secondary" id="reset-settings">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="notifications" id="notifications"></div>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb@7.1.1/build/iife/index-min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
